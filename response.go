@@ -16,6 +16,12 @@ const (
 	ResponserHeader = "X-Responser"
 )
 
+var (
+	E  = WithError
+	KV = WithKV
+	T  = WithTemplate
+)
+
 type ResponseInterface interface {
 	// Status returns http status
 	Status() int
