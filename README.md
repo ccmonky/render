@@ -1,2 +1,3 @@
 # render
-render response based on apierrors
+
+render errors as response meta.
