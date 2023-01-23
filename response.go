@@ -12,10 +12,6 @@ import (
 	"go.uber.org/atomic"
 )
 
-const (
-	ResponserHeader = "X-Responser"
-)
-
 var (
 	E  = WithError
 	KV = WithKV
@@ -100,7 +96,9 @@ func (rp *Response) Status() int {
 }
 
 func (rp *Response) Header() http.Header {
-	var header = make(http.Header, 5)
+	var header = make(http.Header, 6)
+	header.Set(TemplateHeader, rp.Template)
+
 	// configured values
 	header.Set("X-App", appName.Load())
 	header.Set("X-Version", appVersion.Load())
@@ -151,9 +149,9 @@ func Get(rp *Response, key any) (any, bool) {
 	return nil, false
 }
 
-type Transformer func(*Response) ResponseInterface
+type ResponseTransformer func(*Response) ResponseInterface
 
-var Transformers = inithook.NewMap[string, Transformer]()
+var Transformers = inithook.NewMap[string, ResponseTransformer]()
 
 func init() {
 	inithook.RegisterAttrSetter(inithook.AppName, "render", func(ctx context.Context, value string) error {
@@ -165,10 +163,10 @@ func init() {
 		return nil
 	})
 	ctx := context.Background()
-	Transformers.Register(ctx, "", defaultTransformer)
+	Transformers.Register(ctx, "", selfResponseTransformer)
 }
 
-func defaultTransformer(rp *Response) ResponseInterface {
+func selfResponseTransformer(rp *Response) ResponseInterface {
 	return rp
 }
 

@@ -54,7 +54,7 @@ func TestResponse(t *testing.T) {
 	}
 	rp := render.NewResponse(data)
 	assert.Equalf(t, 200, rp.Status(), "rp status")
-	assert.Equalf(t, 5, len(rp.Header()), "rp header length")
+	assert.Equalf(t, 6, len(rp.Header()), "rp header length")
 	assert.Equalf(t, 7, len(rp.Body().(map[string]any)), "rp body length")
 
 	ctx := context.Background()
@@ -72,6 +72,6 @@ func TestResponse(t *testing.T) {
 
 	rp = render.NewResponse(data, render.WithTemplate("embed"))
 	assert.Equalf(t, 500, rp.Status(), "rp embed status")
-	assert.Equalf(t, 6, len(rp.Header()), "rp embed header length")
+	assert.Equalf(t, 7, len(rp.Header()), "rp embed header length")
 	assert.Equalf(t, 7, len(rp.Body().(map[string]any)), "rp embed body length")
 }
