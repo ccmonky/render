@@ -27,6 +27,8 @@ type ResponseInterface interface {
 
 	// Body returns the http body
 	Body() any
+
+	//Get(key any) (any, bool)
 }
 
 type Response struct {
@@ -120,7 +122,7 @@ func (rp *Response) Body() any {
 		// error meta values
 		"code":    rp.MetaError.Code(),
 		"message": rp.MetaError.Message(),
-		"detail":  rp.MetaError,
+		"detail":  fmt.Sprint(rp.MetaError),
 
 		// dynamic values
 		"timestamp": time.Now().Unix(),
@@ -158,7 +160,7 @@ func init() {
 		appName.Store(value)
 		return nil
 	})
-	inithook.RegisterAttrSetter("app_verison", "render", func(ctx context.Context, value string) error {
+	inithook.RegisterAttrSetter(inithook.Version, "render", func(ctx context.Context, value string) error {
 		appVersion.Store(value)
 		return nil
 	})

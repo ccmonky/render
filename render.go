@@ -6,13 +6,15 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/ccmonky/errors"
 	"github.com/ccmonky/inithook"
 	"github.com/timewasted/go-accept-headers"
 )
 
 const (
-	AcceptHeader   = "Accept"
-	TemplateHeader = "X-Render-Template"
+	ContentTypeHeader = "Content-Type"
+	AcceptHeader      = "Accept"
+	TemplateHeader    = "X-Render-Template"
 )
 
 const (
@@ -52,6 +54,12 @@ type Render interface {
 	Render(http.ResponseWriter, interface{}) error
 }
 
+type RenderFunc func(http.ResponseWriter, interface{}) error
+
+func (rf RenderFunc) Render(w http.ResponseWriter, data interface{}) error {
+	return rf(w, data)
+}
+
 // Render interface is to be implemented by JSON, XML, HTML, YAML and so on.
 // provider: https://github.com/gin-gonic/gin/blob/master/render/render.go
 // type Render interface {
@@ -80,16 +88,20 @@ func (ct ContentType) Header() []string {
 func (ct ContentType) Render(w http.ResponseWriter, rp interface{}) error {
 	render, err := Renders.Get(context.TODO(), ct)
 	if err != nil {
-		return err
+		return errors.WithMessagef(err, "get render failed for %v", ct)
 	}
 	switch rp := rp.(type) {
 	case ResponseInterface:
-		w.WriteHeader(rp.Status())
+		header := w.Header()
+		if val := header[ContentTypeHeader]; len(val) == 0 {
+			header[ContentTypeHeader] = ct.Header()
+		}
 		for k, vs := range rp.Header() {
 			for _, v := range vs {
-				w.Header().Add(k, v)
+				header.Add(k, v)
 			}
 		}
+		w.WriteHeader(rp.Status())
 		return render.Render(w, rp.Body())
 	default:
 		return render.Render(w, rp)
@@ -112,9 +124,14 @@ func Negotiate(r *http.Request) ContentType {
 	}
 	ctype, err := acceptSlice.Negotiate(ctypes...)
 	if err != nil {
-		log.Panic(err)
+		log.Panicf("negotiate failed for request accept %s: %v", ctype, err)
 	}
-	return ContentType(ctype)
+	ct := ContentType(ctype)
+	_, err = Renders.Get(r.Context(), ct)
+	if err != nil {
+		log.Panicf("render not found for %v", ct)
+	}
+	return ct
 }
 
 // jsonRender implement `Render` for json format as default render
@@ -122,21 +139,16 @@ type jsonRender struct{}
 
 // Render encode data as json bytes then write into the response writer
 func (r jsonRender) Render(w http.ResponseWriter, data any) (err error) {
-	writeContentType(w, JSON.Header())
+	header := w.Header()
+	if val := header[ContentTypeHeader]; len(val) == 0 {
+		header[ContentTypeHeader] = JSON.Header()
+	}
 	bytes, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
 	_, err = w.Write(bytes)
 	return err
-}
-
-// copy from gin/render
-func writeContentType(w http.ResponseWriter, value []string) {
-	header := w.Header()
-	if val := header["Content-Type"]; len(val) == 0 {
-		header["Content-Type"] = value
-	}
 }
 
 func init() {
@@ -150,4 +162,5 @@ var (
 
 var (
 	_ Render = (*ContentType)(nil)
+	_ Render = (*RenderFunc)(nil)
 )

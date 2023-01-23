@@ -15,7 +15,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	err = inithook.ExecuteAttrSetters(context.Background(), "app_version", "0.3.0")
+	err = inithook.ExecuteAttrSetters(context.Background(), inithook.Version, "0.3.0")
 	if err != nil {
 		panic(err)
 	}
