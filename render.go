@@ -60,21 +60,6 @@ func (rf RenderFunc) Render(w http.ResponseWriter, data interface{}) error {
 	return rf(w, data)
 }
 
-// Render interface is to be implemented by JSON, XML, HTML, YAML and so on.
-// provider: https://github.com/gin-gonic/gin/blob/master/render/render.go
-// type Render interface {
-// 	// Render writes data with custom ContentType.
-// 	Render(http.ResponseWriter) error
-// 	// WriteContentType writes custom ContentType.
-// 	WriteContentType(w http.ResponseWriter)
-// }
-
-// Engine is the generic interface for all responses.
-// provider: https://github.com/unrolled/render/blob/v1/engine.go
-// type Engine interface {
-// 	Render(io.Writer, interface{}) error
-// }
-
 type ContentType string
 
 func (ct ContentType) OK() bool {

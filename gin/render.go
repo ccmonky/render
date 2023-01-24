@@ -25,17 +25,28 @@ func init() {
 	}
 }
 
-type JSON struct{}
-
-func (r JSON) Render(w http.ResponseWriter, rp interface{}) error {
-	return gin.JSON{Data: rp}.Render(w)
+type SimpleRenderKind interface {
+	~struct {
+		Data any
+	}
+	Render(http.ResponseWriter) error
 }
 
-type IndentedJSON struct{}
+type SimpleRender[T SimpleRenderKind] struct{}
 
-func (r IndentedJSON) Render(w http.ResponseWriter, rp interface{}) error {
-	return gin.IndentedJSON{Data: rp}.Render(w)
+func (sr SimpleRender[T]) Render(w http.ResponseWriter, rp interface{}) error {
+	return T{Data: rp}.Render(w)
 }
+
+type JSON = SimpleRender[gin.JSON]
+type IndentedJSON = SimpleRender[gin.IndentedJSON]
+type AsciiJSON = SimpleRender[gin.AsciiJSON]
+type PureJSON = SimpleRender[gin.PureJSON]
+type MsgPack = SimpleRender[gin.MsgPack]
+type ProtoBuf = SimpleRender[gin.ProtoBuf]
+type TOML = SimpleRender[gin.TOML]
+type XML = SimpleRender[gin.XML]
+type YAML = SimpleRender[gin.YAML]
 
 type SecureJSON struct {
 	Prefix string
@@ -54,18 +65,6 @@ func (r JsonpJSON) Render(w http.ResponseWriter, rp interface{}) error {
 	return gin.JsonpJSON{Callback: r.Callback, Data: rp}.Render(w)
 }
 
-type AsciiJSON struct{}
-
-func (r AsciiJSON) Render(w http.ResponseWriter, rp interface{}) error {
-	return gin.AsciiJSON{Data: rp}.Render(w)
-}
-
-type PureJSON struct{}
-
-func (r PureJSON) Render(w http.ResponseWriter, rp interface{}) error {
-	return gin.PureJSON{Data: rp}.Render(w)
-}
-
 type Data struct{}
 
 func (r Data) Render(w http.ResponseWriter, rp interface{}) error {
@@ -75,41 +74,14 @@ func (r Data) Render(w http.ResponseWriter, rp interface{}) error {
 			Data:        data,
 		}.Render(w)
 	}
-	return fmt.Errorf("object of gin data render should be []byte, but got %T", rp)
-}
-
-type MsgPack struct{}
-
-func (r MsgPack) Render(w http.ResponseWriter, rp interface{}) error {
-	return gin.MsgPack{Data: rp}.Render(w)
-}
-
-type ProtoBuf struct{}
-
-func (r ProtoBuf) Render(w http.ResponseWriter, rp interface{}) error {
-	return gin.ProtoBuf{Data: rp}.Render(w)
+	return gin.Data{
+		ContentType: string(render.Binary),
+		Data:        []byte(fmt.Sprintf("%v", rp)),
+	}.Render(w)
 }
 
 // TODO
 type String struct {
 	Format string
 	Data   []any
-}
-
-type TOML struct{}
-
-func (r TOML) Render(w http.ResponseWriter, rp interface{}) error {
-	return gin.TOML{Data: rp}.Render(w)
-}
-
-type XML struct{}
-
-func (r XML) Render(w http.ResponseWriter, rp interface{}) error {
-	return gin.XML{Data: rp}.Render(w)
-}
-
-type YAML struct{}
-
-func (r YAML) Render(w http.ResponseWriter, rp interface{}) error {
-	return gin.YAML{Data: rp}.Render(w)
 }
