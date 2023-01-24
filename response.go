@@ -13,11 +13,17 @@ import (
 )
 
 var (
-	E  = WithError
+	// E is abbr. of `WithError`
+	E = WithError
+
+	// KV is abbr. of `WithKV`
 	KV = WithKV
-	T  = WithTemplate
+
+	// T is abbr. of `WithTemplate`
+	T = WithTemplate
 )
 
+// ResponseInterface defines http response interface
 type ResponseInterface interface {
 	// Status returns http status
 	Status() int
@@ -27,10 +33,17 @@ type ResponseInterface interface {
 
 	// Body returns the http body
 	Body() any
-
-	//Get(key any) (any, bool)
 }
 
+// Response aims to provide a widely applicable `ResponseInterface` implementation,
+// it's made up the following elements:
+//
+// - Data: any object that will be rendered by concrete render, e.g. gin/render.JSON, unrolled/render.XML, ...
+// - MetaError: contributes the response meta from the error(include all values it carries), use `WithError`(E) to specify
+// - Extension: any kvs used to extend the `Response`, use `WithKV`(KV) to specify
+// - Template: used to specify the variant of `Response`, use `WithTemplate`(T) to specify
+//
+// See tests for more details.
 type Response struct {
 	errors.MetaError
 	Data      any
@@ -40,6 +53,7 @@ type Response struct {
 	m map[string]any // NOTE: errors.Map(MetaError)
 }
 
+// NewResponse creates a new *Response instance and returns it or it's variant as `ResponseInterface`
 func NewResponse(data any, opts ...ResponseOption) ResponseInterface {
 	rp := &Response{
 		Data: data,
@@ -60,8 +74,10 @@ func NewResponse(data any, opts ...ResponseOption) ResponseInterface {
 	return rp
 }
 
+// ResponseOption `Response` creation option func
 type ResponseOption func(*Response)
 
+// WithError used to specify `MetaError` of `Response`
 func WithError(err error) ResponseOption {
 	return func(rp *Response) {
 		var me errors.MetaError
@@ -78,6 +94,7 @@ func WithError(err error) ResponseOption {
 	}
 }
 
+// WithKV used to specify `Extension` elements of `Response`
 func WithKV(k, v any) ResponseOption {
 	return func(rp *Response) {
 		if rp.Extension == nil {
@@ -87,16 +104,19 @@ func WithKV(k, v any) ResponseOption {
 	}
 }
 
+// WithTemplate used to specify the returned `Response` variant
 func WithTemplate(tmpl string) ResponseOption {
 	return func(rp *Response) {
 		rp.Template = tmpl
 	}
 }
 
+// Status implement `ResponseInterface` as standard
 func (rp *Response) Status() int {
 	return errors.StatusAttr.Get(rp.MetaError)
 }
 
+// Header implement `ResponseInterface` as standard
 func (rp *Response) Header() http.Header {
 	var header = make(http.Header, 6)
 	header.Set(TemplateHeader, rp.Template)
@@ -113,6 +133,7 @@ func (rp *Response) Header() http.Header {
 
 }
 
+// Body implement `ResponseInterface` as standard
 func (rp *Response) Body() any {
 	return map[string]any{
 		// configured values
@@ -132,10 +153,8 @@ func (rp *Response) Body() any {
 	}
 }
 
-func (rp *Response) Get(key any) (any, bool) {
-	return Get(rp, key)
-}
-
+// Get used to get value specified by key from Response's Extension or error's values
+// if found, return the value and true, otherwise return nil and false
 func Get(rp *Response, key any) (any, bool) {
 	if value, ok := rp.Extension[key]; ok {
 		return value, true
@@ -151,8 +170,10 @@ func Get(rp *Response, key any) (any, bool) {
 	return nil, false
 }
 
+// ResponseTransformer used to transform `*Response` to it's variant
 type ResponseTransformer func(*Response) ResponseInterface
 
+// Transformers defines the ResponseTransformer registry, key is the transformer name
 var Transformers = inithook.NewMap[string, ResponseTransformer]()
 
 func init() {

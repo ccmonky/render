@@ -9,6 +9,7 @@ import (
 	"github.com/ccmonky/errors"
 	"github.com/ccmonky/render"
 	"github.com/stretchr/testify/assert"
+	"github.com/timewasted/go-accept-headers"
 )
 
 type responseWriter struct {
@@ -98,7 +99,49 @@ func TestDefault(t *testing.T) {
 }
 
 func TestNegotiate(t *testing.T) {
+	ctx := context.Background()
+	err := render.Negotiaters.Set(ctx, "", AcceptNegotiater{})
+	assert.Nilf(t, err, "set negotiater")
+	n, err := render.Negotiaters.Get(ctx, "")
+	assert.Nilf(t, err, "get negotiater")
 
+	header := ""
+	ctype, err := n.Negotiate(header, string(render.JSON))
+	assert.Nilf(t, err, "negotiate err")
+	assert.Equalf(t, "application/json; charset=utf-8", ctype, "accept=%s", header)
+
+	header = "application/json"
+	ctype, err = n.Negotiate(header, string(render.JSON))
+	assert.Nilf(t, err, "negotiate err")
+	assert.Equalf(t, "application/json; charset=utf-8", ctype, "accept=%s", header)
+
+	header = "application/*"
+	ctype, err = n.Negotiate(header, string(render.JSON))
+	assert.Nilf(t, err, "negotiate err")
+	assert.Equalf(t, "application/json; charset=utf-8", ctype, "accept=%s", header)
+
+	header = "text/html, application/xhtml+xml, application/xml;q=0.9, */*;q=0.8"
+	ctype, err = n.Negotiate(header, string(render.JSON))
+	assert.Nilf(t, err, "negotiate err")
+	assert.Equalf(t, "application/json; charset=utf-8", ctype, "accept=%s", header)
+
+	ctype, err = n.Negotiate(header, string(render.JSON), string(render.XML))
+	assert.Nilf(t, err, "negotiate err")
+	assert.Equalf(t, "application/xml; charset=utf-8", ctype, "accept=%s", header)
+
+	ctype, err = n.Negotiate(header, string(render.JSON), string(render.XML), string(render.XHTML))
+	assert.Nilf(t, err, "negotiate err")
+	assert.Equalf(t, "application/xhtml+xml; charset=utf-8", ctype, "accept=%s", header)
+
+	ctype, err = n.Negotiate(header, string(render.JSON), string(render.XML), string(render.XHTML), string(render.HTML))
+	assert.Nilf(t, err, "negotiate err")
+	assert.Equalf(t, "text/html; charset=utf-8", ctype, "accept=%s", header)
+}
+
+type AcceptNegotiater struct{}
+
+func (n AcceptNegotiater) Negotiate(acceptHeader string, ctypes ...string) (ctype string, err error) {
+	return accept.Parse(acceptHeader).Negotiate(ctypes...)
 }
 
 func TestJSONP(t *testing.T) {
@@ -106,9 +149,5 @@ func TestJSONP(t *testing.T) {
 }
 
 func TestHTML(t *testing.T) {
-
-}
-
-func TestGin(t *testing.T) {
 
 }

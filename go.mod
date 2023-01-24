@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/ccmonky/errors v0.0.0-20230119094643-5a5aab175a98
 	github.com/ccmonky/inithook v0.0.0-20230122023823-e4bfffdc359b
+	github.com/gin-gonic/gin v1.8.2
 	github.com/stretchr/testify v1.8.1
 	github.com/timewasted/go-accept-headers v0.0.0-20130320203746-c78f304b1b09
 	github.com/unrolled/render v1.5.0
@@ -15,7 +16,6 @@ require (
 	github.com/ccmonky/log v0.0.0-20230113103641-7a2de39dc264 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
-	github.com/gin-gonic/gin v1.8.2 // indirect
 	github.com/goccy/go-json v0.9.11 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
