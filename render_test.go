@@ -108,34 +108,34 @@ func TestNegotiate(t *testing.T) {
 	header := ""
 	ctype, err := n.Negotiate(header, string(render.JSON))
 	assert.Nilf(t, err, "negotiate err")
-	assert.Equalf(t, "application/json; charset=utf-8", ctype, "accept=%s", header)
+	assert.Equalf(t, string(render.JSON), ctype, "accept=%s", header)
 
 	header = "application/json"
 	ctype, err = n.Negotiate(header, string(render.JSON))
 	assert.Nilf(t, err, "negotiate err")
-	assert.Equalf(t, "application/json; charset=utf-8", ctype, "accept=%s", header)
+	assert.Equalf(t, string(render.JSON), ctype, "accept=%s", header)
 
 	header = "application/*"
 	ctype, err = n.Negotiate(header, string(render.JSON))
 	assert.Nilf(t, err, "negotiate err")
-	assert.Equalf(t, "application/json; charset=utf-8", ctype, "accept=%s", header)
+	assert.Equalf(t, string(render.JSON), ctype, "accept=%s", header)
 
 	header = "text/html, application/xhtml+xml, application/xml;q=0.9, */*;q=0.8"
 	ctype, err = n.Negotiate(header, string(render.JSON))
 	assert.Nilf(t, err, "negotiate err")
-	assert.Equalf(t, "application/json; charset=utf-8", ctype, "accept=%s", header)
+	assert.Equalf(t, string(render.JSON), ctype, "accept=%s", header)
 
 	ctype, err = n.Negotiate(header, string(render.JSON), string(render.XML))
 	assert.Nilf(t, err, "negotiate err")
-	assert.Equalf(t, "application/xml; charset=utf-8", ctype, "accept=%s", header)
+	assert.Equalf(t, string(render.XML), ctype, "accept=%s", header)
 
 	ctype, err = n.Negotiate(header, string(render.JSON), string(render.XML), string(render.XHTML))
 	assert.Nilf(t, err, "negotiate err")
-	assert.Equalf(t, "application/xhtml+xml; charset=utf-8", ctype, "accept=%s", header)
+	assert.Equalf(t, string(render.XHTML), ctype, "accept=%s", header)
 
 	ctype, err = n.Negotiate(header, string(render.JSON), string(render.XML), string(render.XHTML), string(render.HTML))
 	assert.Nilf(t, err, "negotiate err")
-	assert.Equalf(t, "text/html; charset=utf-8", ctype, "accept=%s", header)
+	assert.Equalf(t, string(render.HTML), ctype, "accept=%s", header)
 }
 
 type AcceptNegotiater struct{}
