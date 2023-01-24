@@ -111,12 +111,12 @@ func WithTemplate(tmpl string) ResponseOption {
 	}
 }
 
-// Status implement `ResponseInterface` as standard
+// Status implement `ResponseInterface` as default
 func (rp *Response) Status() int {
 	return errors.StatusAttr.Get(rp.MetaError)
 }
 
-// Header implement `ResponseInterface` as standard
+// Header implement `ResponseInterface` as default
 func (rp *Response) Header() http.Header {
 	var header = make(http.Header, 6)
 	header.Set(TemplateHeader, rp.Template)
@@ -133,7 +133,7 @@ func (rp *Response) Header() http.Header {
 
 }
 
-// Body implement `ResponseInterface` as standard
+// Body implement `ResponseInterface` as default
 func (rp *Response) Body() any {
 	return map[string]any{
 		// configured values

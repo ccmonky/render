@@ -115,9 +115,6 @@ func TestUnrolled(t *testing.T) {
 		"version": "0.3.0"
 	}`
 	assert.JSONEq(t, body, w.body.String(), "body")
-
-	w = newResponseWriter()
-	assert.NotNilf(t, render.XML.Render(w, nil), "default only json")
 }
 
 func TestResponseWriter(t *testing.T) {

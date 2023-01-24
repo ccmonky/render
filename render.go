@@ -73,14 +73,17 @@ const (
 
 // Redner defines method to render any to http response writer
 type Render interface {
-	Render(http.ResponseWriter, interface{}) error
+	Render(http.ResponseWriter, interface{}, ...Option) error
 }
 
-// RenderFunc defines the function that implement Render
-type RenderFunc func(http.ResponseWriter, interface{}) error
+// Option used to support the `Render` with dynamic parameters, e.g., jsonp, html, ...
+type Option func(any)
 
-func (rf RenderFunc) Render(w http.ResponseWriter, data interface{}) error {
-	return rf(w, data)
+// RenderFunc defines the function that implement Render
+type RenderFunc func(http.ResponseWriter, interface{}, ...Option) error
+
+func (rf RenderFunc) Render(w http.ResponseWriter, data interface{}, opts ...Option) error {
+	return rf(w, data, opts...)
 }
 
 // ContentType defines the content type render
@@ -96,7 +99,7 @@ func (ct ContentType) Header() []string {
 }
 
 // Render implement `Render` interface, mainly used to extra suppport `ResponseInterface`
-func (ct ContentType) Render(w http.ResponseWriter, rp interface{}) error {
+func (ct ContentType) Render(w http.ResponseWriter, rp interface{}, opts ...Option) error {
 	render, err := Renders.Get(context.TODO(), ct)
 	if err != nil {
 		return errors.WithMessagef(err, "get render failed for %v", ct)
@@ -113,9 +116,9 @@ func (ct ContentType) Render(w http.ResponseWriter, rp interface{}) error {
 			}
 		}
 		w.WriteHeader(rp.Status())
-		return render.Render(w, rp.Body())
+		return render.Render(w, rp.Body(), opts...)
 	default:
-		return render.Render(w, rp)
+		return render.Render(w, rp, opts...)
 	}
 }
 
@@ -178,7 +181,7 @@ func (n defaultNegotiater) Negotiate(acceptHeader string, ctypes ...string) (cty
 type jsonRender struct{}
 
 // Render encode data as json bytes then write into the response writer
-func (r jsonRender) Render(w http.ResponseWriter, data any) (err error) {
+func (r jsonRender) Render(w http.ResponseWriter, data any, opts ...Option) (err error) {
 	header := w.Header()
 	if val := header[ContentTypeHeader]; len(val) == 0 {
 		header[ContentTypeHeader] = JSON.Header()
