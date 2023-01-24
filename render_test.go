@@ -143,11 +143,3 @@ type AcceptNegotiater struct{}
 func (n AcceptNegotiater) Negotiate(acceptHeader string, ctypes ...string) (ctype string, err error) {
 	return accept.Parse(acceptHeader).Negotiate(ctypes...)
 }
-
-func TestJSONP(t *testing.T) {
-
-}
-
-func TestHTML(t *testing.T) {
-
-}

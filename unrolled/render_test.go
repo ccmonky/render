@@ -13,6 +13,7 @@ import (
 	"github.com/ccmonky/errors"
 	"github.com/ccmonky/inithook"
 	"github.com/ccmonky/render"
+	"github.com/ccmonky/render/unrolled"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -115,6 +116,38 @@ func TestUnrolled(t *testing.T) {
 		"version": "0.3.0"
 	}`
 	assert.JSONEq(t, body, w.body.String(), "body")
+}
+
+func TestJSONP(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		render.R("jsonp").Render(w, render.NewResponse(map[string]any{
+			"one":    1,
+			"string": "string",
+		}, render.E(errors.NotFound), render.T("no_timestamp")), unrolled.JSONPCallback("call"))
+	}))
+	defer ts.Close()
+
+	res, err := http.Get(ts.URL)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	body, err := io.ReadAll(res.Body)
+	defer res.Body.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	assert.Equalf(t, 404, res.StatusCode, "status")
+	assert.Equalf(t, string(render.JSONP), res.Header.Get("Content-Type"), "content-type")
+	assert.Equalf(t, "myapp", res.Header.Get("X-App"), "x-app")
+	assert.Equalf(t, "0.3.0", res.Header.Get("X-Version"), "X-Version")
+	assert.Equalf(t, "not_found(5)", res.Header.Get("X-Code"), "x-code")
+	assert.Equalf(t, "meta={source=errors;code=not_found(5)}:status={404}", res.Header.Get("X-Detail"), "x-detail")
+	assert.Equalf(t, "not found", res.Header.Get("X-Message"), "x-message")
+	assert.Equalf(t, "no_timestamp", res.Header.Get("X-Render-Template"), "X-Render-Template")
+	expect := `call({"app":"myapp","code":"not_found(5)","data":{"one":1,"string":"string"},"detail":"meta={source=errors;code=not_found(5)}:status={404}","message":"not found","version":"0.3.0"});`
+	assert.Equalf(t, expect, string(body), "body")
 }
 
 func TestResponseWriter(t *testing.T) {

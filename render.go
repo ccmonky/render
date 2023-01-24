@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/ccmonky/errors"
 	"github.com/ccmonky/inithook"
@@ -22,13 +23,16 @@ const (
 	TemplateHeader = "X-Render-Template"
 )
 
+// DefaultNegotiaterName default negotiater name
+const DefaultNegotiaterName = ""
+
 var (
 	// Renders the renders registry, it's aim to store third party renders,
 	// note, that's no need to store the `Response` render like JSON, HTML, ...
 	Renders = inithook.NewMap[ContentType, Render]()
 
-	// DefaultNegotiaterName default negotiater name
-	DefaultNegotiaterName = ""
+	// ContentTypes used to store the mapping of the name to `ContentType`
+	ContentTypes = inithook.NewMap[string, ContentType]()
 
 	// Negotiaters the negotiaters registry, now only the DefaultNegotiaterName used
 	Negotiaters = inithook.NewMap[string, Negotiater]()
@@ -122,6 +126,16 @@ func (ct ContentType) Render(w http.ResponseWriter, rp interface{}, opts ...Opti
 	}
 }
 
+// R returns the content type for name
+func R(name string) ContentType {
+	ct, err := ContentTypes.Get(context.Background(), strings.ToLower(name))
+	if err != nil {
+		log.Panicf("get content type for name %s failed: %v", name, err)
+		return JSON
+	}
+	return ct
+}
+
 // Negotiate used to select the response content-type according to http request, default to `JSON`
 // The default behavior can be changed, e.g.
 //
@@ -196,8 +210,25 @@ func (r jsonRender) Render(w http.ResponseWriter, data any, opts ...Option) (err
 
 func init() {
 	ctx := context.Background()
-	Renders.Register(ctx, JSON, jsonRender{})
-	Negotiaters.Register(ctx, DefaultNegotiaterName, defaultNegotiater{})
+	err := Renders.Register(ctx, JSON, jsonRender{})
+	err = errors.WithError(err, Negotiaters.Register(ctx, DefaultNegotiaterName, defaultNegotiater{}))
+
+	err = errors.WithError(err, ContentTypes.Register(ctx, "", JSON))
+	err = errors.WithError(err, ContentTypes.Register(ctx, "json", JSON))
+	err = errors.WithError(err, ContentTypes.Register(ctx, "jsonascii", JSONASCII))
+	err = errors.WithError(err, ContentTypes.Register(ctx, "jsonp", JSONP))
+	err = errors.WithError(err, ContentTypes.Register(ctx, "html", HTML))
+	err = errors.WithError(err, ContentTypes.Register(ctx, "text", Text))
+	err = errors.WithError(err, ContentTypes.Register(ctx, "protobuf", PROTOBUF))
+	err = errors.WithError(err, ContentTypes.Register(ctx, "binary", Binary))
+	err = errors.WithError(err, ContentTypes.Register(ctx, "yaml", YAML))
+	err = errors.WithError(err, ContentTypes.Register(ctx, "toml", TOML))
+	err = errors.WithError(err, ContentTypes.Register(ctx, "xml", XML))
+	err = errors.WithError(err, ContentTypes.Register(ctx, "msgpack", MSGPACK))
+	err = errors.WithError(err, ContentTypes.Register(ctx, "xhtml", XHTML))
+	if err != nil {
+		log.Panicln(errors.GetAllErrors(err))
+	}
 }
 
 var (
