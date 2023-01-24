@@ -64,14 +64,11 @@ func NewResponse(data any, opts ...ResponseOption) ResponseInterface {
 	if rp.MetaError == nil {
 		rp.MetaError = errors.OK
 	}
-	if rp.Template != "" {
-		transformer, err := Transformers.Get(context.Background(), rp.Template)
-		if err != nil {
-			log.Panicf("response transformer %s not found", rp.Template)
-		}
-		return transformer(rp)
+	transformer, err := Transformers.Get(context.Background(), rp.Template)
+	if err != nil {
+		log.Panicf("response transformer %s not found", rp.Template)
 	}
-	return rp
+	return transformer(rp)
 }
 
 // ResponseOption `Response` creation option func
