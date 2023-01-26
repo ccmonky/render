@@ -75,6 +75,14 @@ const (
 	XHTML ContentType = "application/xhtml+xml; charset=utf-8"
 )
 
+var (
+	// R is abbr. of GetRenderByName
+	R = GetRenderByName
+
+	// N is abbr. of Negotiate
+	N = Negotiate
+)
+
 // Redner defines method to render any to http response writer
 type Render interface {
 	Render(http.ResponseWriter, interface{}, ...Option) error
@@ -93,7 +101,7 @@ func (rf RenderFunc) Render(w http.ResponseWriter, data interface{}, opts ...Opt
 // ContentType defines the content type render
 type ContentType string
 
-func (ct ContentType) OK() bool {
+func (ct ContentType) Ready() bool {
 	return Renders.Has(context.Background(), ct)
 }
 
@@ -126,8 +134,21 @@ func (ct ContentType) Render(w http.ResponseWriter, rp interface{}, opts ...Opti
 	}
 }
 
-// R returns the content type for name
-func R(name string) ContentType {
+// OK do render for success with data as result, and automatic select template with `*http.Request`
+func (ct ContentType) OK(w http.ResponseWriter, r *http.Request, data interface{}, opts ...Option) error {
+	if _, ok := data.(ResponseInterface); !ok && r != nil {
+		rp := NewResponse(data, T(r.Header.Get(TemplateHeader)))
+		return ct.Render(w, rp, opts...)
+	}
+	return ct.Render(w, data, opts...)
+}
+
+func (ct ContentType) Err(w http.ResponseWriter, r *http.Request, err error, opts ...Option) error {
+	return ct.Render(w, NewResponse(nil, E(err), T(r.Header.Get(TemplateHeader))), opts...)
+}
+
+// GetRenderByName returns the content type for name
+func GetRenderByName(name string) ContentType {
 	ct, err := ContentTypes.Get(context.Background(), strings.ToLower(name))
 	if err != nil {
 		log.Panicf("get content type for name %s failed: %v", name, err)

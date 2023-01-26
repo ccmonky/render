@@ -5,21 +5,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/ccmonky/inithook"
 	"github.com/ccmonky/render"
 	"github.com/stretchr/testify/assert"
 )
-
-func init() {
-	err := inithook.ExecuteAttrSetters(context.Background(), inithook.AppName, "myapp")
-	if err != nil {
-		panic(err)
-	}
-	err = inithook.ExecuteAttrSetters(context.Background(), inithook.Version, "0.3.0")
-	if err != nil {
-		panic(err)
-	}
-}
 
 type ReexportResponse render.Response
 
