@@ -83,6 +83,16 @@ var (
 	N = Negotiate
 )
 
+// OK is short alias for JSON.OK
+func OK(w http.ResponseWriter, r *http.Request, data interface{}, opts ...Option) error {
+	return JSON.OK(w, r, data, opts...)
+}
+
+// Err is short alias for JSON.Err
+func Err(w http.ResponseWriter, r *http.Request, err error, opts ...Option) error {
+	return JSON.Err(w, r, err, opts...)
+}
+
 // Redner defines method to render any to http response writer
 type Render interface {
 	Render(http.ResponseWriter, interface{}, ...Option) error
