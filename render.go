@@ -83,12 +83,12 @@ var (
 	N = Negotiate
 )
 
-// OK is short alias for JSON.OK
+// OK is shortcut for JSON.OK
 func OK(w http.ResponseWriter, r *http.Request, data interface{}, opts ...Option) error {
 	return JSON.OK(w, r, data, opts...)
 }
 
-// Err is short alias for JSON.Err
+// Err is shortcut for JSON.Err
 func Err(w http.ResponseWriter, r *http.Request, err error, opts ...Option) error {
 	return JSON.Err(w, r, err, opts...)
 }
